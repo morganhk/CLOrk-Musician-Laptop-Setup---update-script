@@ -1,54 +1,16 @@
-##Text-version of the scpt code.
+This project is coded in AppleScript
+It is released in public domain
+Feel free to use it for anything you want, obviously I'm not responsible for anything you do with the provided code.
 
+Original Intent:
+================
 
---Setup the CLOrk Laptops
---2013-09-18
--- Morgan Aasdam
--- Script in public domain. Some code gleaned from the web/
--- Code did not get tidied up, feel free to do so yourself ;-)
+I had to setup and maintain 10 Macbook Air for the City University (of Hong Kong) Laptop Orchestra. I maintain a working disk image for the the 10 laptops. After imaging there are always scores, drivers or applications that need to be installed before a performance. This script, based at the root of a USB thumbdrive, will copy performance files, install necessary supporting software and then eject the thumbdrive when done.
 
---get the containing folder of the script
-set myPath to path to me
-tell application "Finder"
-	set myFolder to (container of myPath) as string
-end tell
-set here to POSIX path of myFolder
+What it does:
+=============
 
---Setup Leap motion from PKG
-set thePkg to here & "Leap Motion.pkg"
-do shell script "open " & quoted form of thePkg
-
---Backup current files
-set theDate to (do shell script "date '+%Y.%m.%d'")
-try
-	do shell script "mkdir ~/oldConcertFiles"
-end try
-try
-	do shell script "cp -Rvf ~/Desktop/ConcertFiles ~/oldConcertFiles/ConcertFiles." & theDate
-on error errorMessage number errorNumber
-	--first install?
-	display dialog "Concert Files not backed up"
-end try
-
-
---Use rsync to copy the new files
-try
-	do shell script "rsync -razv --delete \"" & here & "ConcertFiles\" ~/Desktop/"
-on error errorMessage number errorNumber
-	--first install?
-	display dialog "Concert Files not on USB drive"
-end try
-
-
---Tell the user we are done and unmount
-display dialog "DONE!"
-
---Unmounting the USB stick (don't run this script from your system drive ;-))
-set diskPath to (do shell script "df " & (quoted form of here) & " | tail -1 | cut -d '%' -f 3 | sed -e 's/^ *//g' -e 's/ *$//g'") -- for 10.8
-if contents of diskPath is "" then
-	set diskPath to (do shell script "df " & (quoted form of here) & " | tail -1 | cut -d '%' -f 2 | sed -e 's/^ *//g' -e 's/ *$//g'") --for 10.7
-end if
-set diskName to (do shell script "diskutil info " & quoted form of diskPath & " | grep 'Volume Name' | cut -d : -f 2 | sed -e 's/^ *//g' -e 's/ *$//g'")
-tell application "Finder"
-	if disk diskName exists then eject disk diskName
-end tell
+- Install Leap Motion pkg file
+- Backup laptop's performance files folder
+- Copy the new performance files using rsync -- trying to save time on big files
+- Find the volume name from which the script is running and eject it
